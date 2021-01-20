@@ -2,6 +2,7 @@ package jpastudy.datajpa.repo;
 
 import jpastudy.datajpa.domain.Member;
 import jpastudy.datajpa.domain.Team;
+import jpastudy.datajpa.dto.MemberDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ class MemberRepoTest {
 
     @Autowired
     MemberRepo memberRepo;
+
+    @Autowired
+    TeamRepo teamRepo;
 
     @PersistenceContext
     EntityManager em;
@@ -89,5 +93,78 @@ class MemberRepoTest {
         memberRepo.delete(member2);
         long deletedCount = memberRepo.count();
         assertThat(deletedCount).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("메소드 이름으로 쿼리 생성")
+    public void createQueryByMethodName() {
+        Member member1 = new Member("member", 10);
+        Member member2 = new Member("member", 20);
+        memberRepo.save(member1);
+        memberRepo.save(member2);
+
+        List<Member> result = memberRepo.findByUsernameAndAgeGreaterThan("member", 15);
+
+        assertThat(result.get(0).getUsername()).isEqualTo("member");
+        assertThat(result.get(0).getAge()).isEqualTo(20);
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Named 쿼리 테스트")
+    public void namedQueryTest() {
+        Member member1 = new Member("member", 10);
+        Member member2 = new Member("member", 20);
+        memberRepo.save(member1);
+        memberRepo.save(member2);
+
+        List<Member> result = memberRepo.findByUsername("member");
+
+        assertThat(result.get(0).getUsername()).isEqualTo("member");
+        assertThat(result.get(0).getAge()).isEqualTo(10);
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Named 쿼리 테스트")
+    public void namedQuery2Test() {
+        Member member1 = new Member("member", 10);
+        Member member2 = new Member("member", 20);
+        memberRepo.save(member1);
+        memberRepo.save(member2);
+
+        List<Member> result = memberRepo.findUser("member", 10);
+
+        assertThat(result.get(0).getUsername()).isEqualTo("member");
+        assertThat(result.get(0).getAge()).isEqualTo(10);
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("조회 쿼리 테스트")
+    public void queryTest() {
+        Member member1 = new Member("member", 10);
+        Member member2 = new Member("member", 20);
+        memberRepo.save(member1);
+        memberRepo.save(member2);
+
+        List<String> usernameList = memberRepo.findUsernameList();
+
+        assertThat(usernameList.size()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("DTO 조회 쿼리 테스트")
+    public void dtoQueryTest() {
+        Team team = new Team("teamA");
+        teamRepo.save(team);
+
+        Member member1 = new Member("member", 10);
+        member1.setTeam(team);
+        memberRepo.save(member1);
+
+        List<MemberDto> dtos = memberRepo.findMemberDto();
+
+        assertThat(dtos.get(0).getTeamName()).isEqualTo("teamA");
     }
 }
