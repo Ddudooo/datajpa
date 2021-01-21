@@ -7,10 +7,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -122,7 +128,7 @@ class MemberRepoTest {
 
         assertThat(result.get(0).getUsername()).isEqualTo("member");
         assertThat(result.get(0).getAge()).isEqualTo(10);
-        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.size()).isEqualTo(2);
     }
 
     @Test
@@ -166,5 +172,65 @@ class MemberRepoTest {
         List<MemberDto> dtos = memberRepo.findMemberDto();
 
         assertThat(dtos.get(0).getTeamName()).isEqualTo("teamA");
+    }
+
+    @Test
+    @DisplayName("파라미터 바인딩 쿼리 테스트")
+    public void findMemberByNames() {
+        Member member1 = new Member("member", 10);
+        Member member2 = new Member("member2", 20);
+        memberRepo.save(member1);
+        memberRepo.save(member2);
+
+        List<String> names = new ArrayList<>();
+        names.add("member");
+        names.add("member2");
+
+        List<Member> findmembers = memberRepo.findByNames(names);
+
+        assertThat(findmembers.size()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("다양한 반환타입 테스트")
+    public void returnType() {
+        Member member1 = new Member("AAA", 10);
+        Member member2 = new Member("BBB", 20);
+        memberRepo.save(member1);
+        memberRepo.save(member2);
+
+        List<Member> memberList = memberRepo.findListByUsername("AAA");
+        Member findMember = memberRepo.findMemberByUsername("BBB");
+        Optional<Member> optionalMember = memberRepo.findOptionalByUsername("AAA");
+
+        assertThat(memberList.size()).isEqualTo(1);
+        assertThat(findMember.getId()).isEqualTo(member2.getId());
+        assertThat(optionalMember).isPresent();
+    }
+
+    @Test
+    @DisplayName("스프링 데이터 JPA 페이징과 정렬 테스트")
+    public void pageQueryTest() {
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+        memberRepo.save(new Member("AAA", 10));
+
+        int age = 5;
+        int offset = 0;
+        int limit = 3;
+
+        Page<Member> memberPage = memberRepo
+            .findPageMemberByAgeAfter(age, PageRequest.of(0, 3, Sort.by(
+                Direction.DESC, "username")));
+
+        assertThat(memberPage.getSize()).isEqualTo(3);
     }
 }

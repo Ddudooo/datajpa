@@ -2,11 +2,14 @@ package jpastudy.datajpa.repo;
 
 import jpastudy.datajpa.domain.Member;
 import jpastudy.datajpa.dto.MemberDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public interface MemberRepo extends JpaRepository<Member, Long> {
@@ -25,4 +28,15 @@ public interface MemberRepo extends JpaRepository<Member, Long> {
     @Query("select new jpastudy.datajpa.dto"
         + ".MemberDto(m.id, m.username, t.name) from Member m join m.team t")
     List<MemberDto> findMemberDto();
+
+    @Query("select m from Member m where m.username in :username")
+    List<Member> findByNames(@Param("username") List<String> names);
+
+    List<Member> findListByUsername(String username);
+
+    Member findMemberByUsername(String username);
+
+    Optional<Member> findOptionalByUsername(String username);
+
+    Page<Member> findPageMemberByAgeAfter(int age, Pageable pageable);
 }
