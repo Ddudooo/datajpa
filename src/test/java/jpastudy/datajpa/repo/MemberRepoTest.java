@@ -233,4 +233,83 @@ class MemberRepoTest {
 
         assertThat(memberPage.getSize()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("벌크성 수정 쿼리 테스트")
+    public void bulkQueryTest() {
+        memberRepo.save(new Member("AAA", 12));
+        memberRepo.save(new Member("AAA1", 13));
+        memberRepo.save(new Member("AAA2", 14));
+        memberRepo.save(new Member("AAA3", 15));
+        memberRepo.save(new Member("AAA4", 16));
+        memberRepo.save(new Member("AAA5", 17));
+        memberRepo.save(new Member("AAA6", 18));
+        memberRepo.save(new Member("AAA7", 19));
+        memberRepo.save(new Member("AAA8", 20));
+        memberRepo.save(new Member("AAA9", 21));
+        memberRepo.save(new Member("AAA10", 22));
+
+        int age = 10;
+
+        int updated = memberRepo.bulkAgePlus(age);
+
+        assertThat(updated).isEqualTo(11);
+    }
+
+    @Test
+    @DisplayName("엔티티 그래프 테스트")
+    public void entityGraphTest() {
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepo.save(teamA);
+        teamRepo.save(teamB);
+
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 10, teamB);
+
+        memberRepo.save(member1);
+        memberRepo.save(member2);
+
+        em.flush();
+        em.clear();
+        //List<Member> members = memberRepo.findAll();
+        List<Member> members = memberRepo.findEntityGraphByUsername("member1");
+        //List<Member> members = memberRepo.findMemberFetchJoin();
+
+        for (Member member : members) {
+            System.out.println("member.username = " + member.getUsername());
+            System.out.println("member.teamClass = " + member.getTeam().getClass());
+            System.out.println("member.team.name = " + member.getTeam().getName());
+        }
+
+    }
+
+    @Test
+    @DisplayName("JPA Hint 테스트")
+    public void queryHint() {
+        Member member1 = new Member("member1", 10);
+        memberRepo.save(member1);
+        em.flush();
+        em.clear();
+        Member findMember = memberRepo.findReadOnlyByUsername("member1");
+        findMember.setUsername("member2");
+
+        em.flush();
+    }
+
+    @Test
+    @DisplayName("JPA lock 테스트")
+    public void lock() {
+        Member member1 = new Member("member1", 10);
+        memberRepo.save(member1);
+        em.flush();
+        em.clear();
+        List<Member> findMember = memberRepo.findLockByUsername("member1");
+    }
+
+    @Test
+    @DisplayName("사용자 정의 리포지토리 호출 테스트")
+    public void callCustomRepo() {
+        List<Member> members = memberRepo.findMemberCustom();
+    }
 }
